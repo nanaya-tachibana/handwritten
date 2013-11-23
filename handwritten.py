@@ -27,5 +27,6 @@ def get_data(size, t):
     labels = open(t+'-labels.idx1-ubyte', mode='rb')
     labels.seek(8)
     l = read_labels(labels, size)
+    labels.close()
 
     return np.array(img, dtype=np.uint8), np.array(l, np.uint8)
