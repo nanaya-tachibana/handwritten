@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
 import numpy as np
-from base import Base
-from utils import sigmoid
-from optimize import mini
+from .base import Base
+from .utils import sigmoid
+from .optimize import mini
 
 class LogisticRegression(Base):
     """Logistic regression classifier

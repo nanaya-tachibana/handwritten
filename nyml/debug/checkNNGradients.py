@@ -1,8 +1,8 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy import linalg
-from neural_network import NeuralNetwork
+from nyml.neural_network import NeuralNetworkClassifier
 
 def initialize_weights(fout, fin):
     return np.sin(np.arange(1, fout * (fin+1)+1)).reshape((fout, fin+1)) / 10
@@ -35,9 +35,10 @@ def check_NNGradients(lmbd):
 
     nn_params = np.hstack([theta1.reshape(-1), theta2.reshape(-1)])
 
-    nn = NeuralNetwork(list(range(num_labels)), [hidden_layer_size], lmbd=lmbd)
+    nn = NeuralNetworkClassifier(
+        list(range(num_labels)), input_layer_size, [hidden_layer_size], lmbd=lmbd
+    )
     J, grad = nn._cost_function(X, y)
-
 
     g = grad(nn_params)
     numgrad = compute_numerical_gradient(J, nn_params)

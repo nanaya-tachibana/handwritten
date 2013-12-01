@@ -1,4 +1,3 @@
-#! /usr/bin/python
 # -*- coding: utf-8 -*-
 from struct import unpack
 import numpy as np
