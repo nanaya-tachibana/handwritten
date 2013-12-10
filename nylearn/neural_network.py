@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 import operator
 from functools import reduce
 import numpy as np
@@ -8,12 +8,14 @@ from .base import Base
 from .utils import sigmoid, sigmoid_gradient, random_parameters
 from .optimize import mini
 
+
 class NeuralNetwork(Base):
     """Neural Network Model
 
     """
 
-    def __init__(self, input_layer_size, output_layer_size, hidden_layer_size=None, lmbd=0):
+    def __init__(self, input_layer_size, output_layer_size,
+                 hidden_layer_size=None, lmbd=0):
         super(NeuralNetwork, self).__init__(lmbd=lmbd)
         self.input_layer_size = input_layer_size
         self.hidden_layer_size = hidden_layer_size
@@ -22,7 +24,7 @@ class NeuralNetwork(Base):
     def _read_cache(self, theta, X, y):
         """Hack for func J and grad in _cost_function sharing data"""
         value = self.cache
-        if value == None or value[0] != theta:
+        if value is None or value[0] != theta:
             theta = self.reshape_theta(theta, self.layer_size)
             _theta = [self.ignore_bias(t) for t in theta]
             a, z = self.feedforward(theta, X)
@@ -41,7 +43,8 @@ class NeuralNetwork(Base):
                 self.output_layer_cost(m, a[-1], y) + self.lmbd * reduce(
                     operator.add,
                     ((_t * t).sum() for _t, t in zip(_theta, theta))
-            ) / (2*m))
+                ) / (2*m)
+            )
 
         def grad(theta):
             """Computer the gradient of the cost w.r.t. to the @theta"""
@@ -84,7 +87,8 @@ class NeuralNetwork(Base):
 
     def preprocess(self, X, y):
         """Overwritten this function to perform addition preprocess"""
-        m, X = self.add_bias(X)
+        m = len(y)
+        X = self.add_bias(X)
         return m, X, y
 
     def output_layer_hypotheses(self, a, theta):
@@ -125,13 +129,13 @@ class NeuralNetwork(Base):
         return theta_list
 
     def feedforward(self, theta, X):
-        a = [X] # input layer. a_0 = X + bias
+        a = [X]  # input layer. a_0 = X + bias
         z = [0]
 
         for i in range(1, len(self.hidden_layer_size)+1):
             z.append(a[i-1].dot(theta[i-1].T))  # z_i = a_(i-1) * theta_(i-1)
-            a.append(self.add_bias(sigmoid(z[i]))[1])  # a_i = sigmoid(z_i) + bias
-        a.append(self.output_layer_hypotheses(a[-1], theta[-1])) # output layer.
+            a.append(self.add_bias(sigmoid(z[i])))  # a_i = sigmoid(z_i) + bias
+        a.append(self.output_layer_hypotheses(a[-1], theta[-1]))  # output layer.
 
         return a, z
 
@@ -175,7 +179,8 @@ class NeuralNetworkClassifier(NeuralNetwork):
     lmbd: float(>=0)
     Use for regularization. Set 0 to disable regularization.
     """
-    def __init__(self, labels, input_layer_size, hidden_layer_size=None, lmbd=0):
+    def __init__(self, labels, input_layer_size,
+                 hidden_layer_size=None, lmbd=0):
         super(NeuralNetworkClassifier, self).__init__(
             input_layer_size, len(labels), hidden_layer_size, lmbd
         )
@@ -185,7 +190,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
         m, X, y = super(NeuralNetworkClassifier, self).preprocess(X, y)
 
         y = np.array(
-            np.tile(np.array(self.labels), (m,1)) == y[:, np.newaxis],
+            np.tile(np.array(self.labels), (m, 1)) == y[:, np.newaxis],
             dtype=np.float64
         )
 
@@ -211,9 +216,10 @@ class NeuralNetworkClassifier(NeuralNetwork):
         a = X
 
         for theta in self.param:
-            a = sigmoid(self.add_bias(a)[1].dot(theta.T))
+            a = sigmoid(self.add_bias(a).dot(theta.T))
 
         return a.argmax(axis=1)
+
 
 class NeuralNetworkRegression(NeuralNetwork):
     """Neural Network Regression
@@ -252,6 +258,6 @@ class NeuralNetworkRegression(NeuralNetwork):
         a = X
 
         for theta in self.param[:-1]:
-            a = sigmoid(self.add_bias(a)[1].dot(theta.T))
+            a = sigmoid(self.add_bias(a).dot(theta.T))
 
-        return self.add_bias(a)[1].dot(self.param[-1].T)
+        return self.add_bias(a).dot(self.param[-1].T)
