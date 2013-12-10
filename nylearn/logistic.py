@@ -30,17 +30,37 @@ class LogisticRegression(Base):
         self.n_in = n_in + 1
         self.n_out = n_out
         self._theta = theano.shared(
-            value=np.zeros((self.n_in, self.n_out), dtype=theano.config.floatX),
+            np.zeros((self.n_in, self.n_out), dtype=theano.config.floatX),
             name='theta'
         )
 
     @property
     def theta(self):
-        return self._theta.get_value().reshape(-1)
+        return self._theta.get_value(borrow=True).reshape(-1)
 
     @theta.setter
     def theta(self, value):
         self._theta.set_value(value.reshape((self.n_in, self.n_out)))
+
+    def predict(self, dataset):
+        """Return predicted class labels as a numpy vecter
+
+        Parameters
+        ------
+        dataset: dataset
+        """
+        y = theano.function([], self._predict_y(dataset.X))
+        return y()
+
+    def errors(self, dataset):
+        """Return a float representing the error rate
+
+        Parameters
+        ------
+        dataset: dataset
+        """
+        e = theano.function([], self._errors(dataset.X, dataset.y))
+        return e()
 
     def _p_given_X(self, X):
         """Compute `p(y = i | x)` corresponding to the output."""
@@ -61,49 +81,25 @@ class LogisticRegression(Base):
 
         return J+rj, (grad+rg).flatten(1)
 
-    def predict(self, X):
-        """Return predicted classes.
-
-        Predicts y given x by choosing `argmax_i P(Y=i|x,W,b)`.
+    def _predict_y(self, X):
+        """Predict y given x by choosing `argmax_i P(Y=i|X, theta)`.
 
         Parameters
         ------
-        X: ndarray
-        samples
+        X: tensor like
+            feature matrix
         """
         return T.argmax(self._p_given_X(self.add_bias(X)), axis=1)
 
-    # def train(self, X, y, maxiter=50, theta=None, method='BFGS'):
-    #     """Use data @X @y to train the classifier
+    def _errors(self, X, y):
+        """Compute the rate of predict_y_i != y_i
 
-    #     Parameters
-    #     ------
-    #     X: ndarray
-    #     Samples
+        Parameters
+        ------
+        X: tensor like
+            feature matrix
 
-    #     y: ndarray
-    #     Sample labels
-
-    #     maxiter: integer
-    #     Maximum number of iterations to perform
-
-    #     theta: ndarray
-    #     Initial estimate
-
-    #     method: string
-    #     Training method
-    #     """
-    #     guess = theta
-    #     if not guess:
-    #         guess = np.zeros(X.shape[1] + 1)
-    #     assert len(guess) == X.shape[1] + 1
-
-    #     if len(self.labels) <= 2:
-    #         J, grad = self._cost_function(X, y)
-    #         self.param = mini(J, grad, maxiter, guess, method=method)
-    #     else:
-    #         t = []
-    #         for label in self.labels:
-    #             J, grad = self._cost_function(X, np.array(y == label, dtype=np.float64))
-    #             t.append(mini(J, grad, maxiter, guess, method=method))
-    #         self.param = np.array(t).T
+        y: tensor like
+            class label
+        """
+        return T.mean(T.neq(self._predict_y(X), y))

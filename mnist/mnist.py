@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
+
 def read_images(f, row, col, size):
     pixels = row * col
     buf = f.read(pixels*size)
@@ -12,8 +13,10 @@ def read_images(f, row, col, size):
         for p in np.arange(0, size*pixels, pixels)
     ]
 
+
 def read_labels(f, size):
     return unpack('B'*size, f.read(size))
+
 
 def get_data(size, t):
     images = open('mnist/'+t+'-images.idx3-ubyte', mode='rb')
@@ -32,16 +35,18 @@ def get_data(size, t):
 
     return np.array(img, dtype=np.uint8), np.array(l, np.uint8)
 
+
 def display_number(x):
     """Plot matrix @x as an image
 
     Parameters
     ------
     x: 2d array
-    A pixel matrix represents a number.
+        A pixel matrix represents a number.
     """
-    im = plt.imshow(x, cmap=cm.Greys, vmax=x.max(), vmin=0)
+    plt.imshow(x, cmap=cm.Greys, vmax=x.max(), vmin=0)
     plt.show()
+
 
 def display_numbers(X, size=10):
     """Plot @size x @size numbers in X randomly
@@ -49,14 +54,14 @@ def display_numbers(X, size=10):
     Parameters
     ------
     X: 2d array
-    Each row contains one number's all pixels in row order.
+        Each row contains one number's all pixels in row order.
 
-    size: integer
+    size: int
     """
     mask = np.random.permutation(X.shape[0])[0:size**2]
 
     display_array = np.vstack([np.hstack([
-        X[mask, :][size*i+j, :].reshape(28,28) for j in range(size)
+        X[mask, :][size*i+j, :].reshape(28, 28) for j in range(size)
     ]) for i in range(size)])
-    im = plt.imshow(display_array, cmap=cm.Greys, vmax=255, vmin=0)
+    plt.imshow(display_array, cmap=cm.Greys, vmax=255, vmin=0)
     plt.show()
