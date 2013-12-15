@@ -1,24 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import theano
-import theano.tensor as T
+from nylearn.utils import shared
 
 
-class dataset:
+class Dataset:
 
     def __init__(self, features, values):
 
         assert isinstance(features, np.ndarray)
         assert isinstance(values, np.ndarray)
 
-        self.X = theano.shared(
-            np.asarray(features, dtype=theano.config.floatX),
-            borrow=True
-        )
-        self.X = T.cast(self.X, features.dtype.name)
-
-        self.y = theano.shared(
-            np.asarray(values, dtype=theano.config.floatX),
-            borrow=True
-        )
-        self.y = T.cast(self.y, features.dtype.name)
+        self.X = shared(features, dtype=features.dtype.name)
+        self.y = shared(values, dtype=values.dtype.name)

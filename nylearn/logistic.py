@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import theano
 import theano.tensor as T
 
-from nylearn.base import Base
+from nylearn.base import Layer
 
 
-class LogisticRegression(Base):
+class LogisticRegression(Layer):
     """Multi-class logistic regression classifier
 
     Use one-vs.-all(OvA) for multiclass case.
@@ -26,21 +25,7 @@ class LogisticRegression(Base):
     """
 
     def __init__(self, n_in, n_out, lamda=0):
-        super(LogisticRegression, self).__init__(lamda=lamda)
-        self.n_in = n_in + 1
-        self.n_out = n_out
-        self._theta = theano.shared(
-            np.zeros((self.n_in, self.n_out), dtype=theano.config.floatX),
-            name='theta'
-        )
-
-    @property
-    def theta(self):
-        return self._theta.get_value(borrow=True).reshape(-1)
-
-    @theta.setter
-    def theta(self, value):
-        self._theta.set_value(value.reshape((self.n_in, self.n_out)))
+        super(LogisticRegression, self).__init__(n_in, n_out, lamda=lamda)
 
     def predict(self, dataset):
         """Return predicted class labels as a numpy vecter
@@ -69,17 +54,14 @@ class LogisticRegression(Base):
     def _cost_function(self, X, y):
         """Compute penalize and gradient for current @theta"""
 
-        theta = self._theta
-        _theta = self.ignore_bias(theta)
-        m = y.shape[0]
-        n = self.n_out
+        m = X.shape[0]
         X = self.add_bias(X)
 
         J = -T.mean(T.log(self._p_given_X(X))[T.arange(m), y])
-        grad = T.grad(J, theta)
-        rj, rg = self._l2_reg(_theta, m, n)
+        grad = T.grad(J, self._theta)
+        rj, rg = self._l2_regularization(m)
 
-        return J+rj, (grad+rg).flatten(1)
+        return J+rj, (grad+rg).flatten()
 
     def _predict_y(self, X):
         """Predict y given x by choosing `argmax_i P(Y=i|X, theta)`.
