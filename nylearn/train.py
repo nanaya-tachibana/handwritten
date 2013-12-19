@@ -59,7 +59,7 @@ class StochasticGradientDescent:
             x = dataset.X[start:end]
             y = dataset.y[start:end]
 
-            J, grad = self.model._cost_function(x, y)
+            J, grad = self.model._cost_and_gradient(x, y)
             givens = {x: dataset.X[start:end], y: dataset.y[start:end]}
             f = theano.function(list(args), J, givens=givens)
             g = theano.function(list(args), grad, givens=givens)
@@ -83,7 +83,7 @@ class StochasticGradientDescent:
         else:
             assert isinstance(validation_set, Dataset)
             validation_set_size = validation_set.X.shape[0].eval()
-        num_train_batches = int(np.ceil((m-offset) / batch_size))
+        num_train_batches = int(np.floor((m-offset) / batch_size))
 
         indx = T.lscalar()
         start = offset + indx * batch_size
@@ -138,7 +138,7 @@ class ConjugateGradientDescent:
         maxiter: int
             Maximum number of iterations to perform.
         """
-        J, grad = self.model._cost_function(dataset.X, dataset.y)
+        J, grad = self.model._cost_and_gradient(dataset.X, dataset.y)
         cost_func = theano.function([], J, name='batch_cost')
         grad_func = theano.function([], grad, name='batch_grad')
 

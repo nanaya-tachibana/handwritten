@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 import theano
 import theano.tensor as T
 
 from nylearn.base import Layer
+from nylearn.utils import shared
 
 
 class LogisticRegression(Layer):
@@ -12,20 +14,19 @@ class LogisticRegression(Layer):
 
     Parameters
     ------
-    n_in: int
-        Number of input units, the dimension of the space
-        in which the datapoints lie.
+    features: int
+        Number of input sample's features.
 
-    n_out: int
-        Number of output units, the dimension of the space
-        in which the labels lie.
+    labels: int
+        Number of output classes.
 
     lamda: float
         Parameter used for regularization. Set 0 to disable regularize.
     """
 
-    def __init__(self, n_in, n_out, lamda=0):
-        super(LogisticRegression, self).__init__(n_in, n_out, lamda=lamda)
+    def __init__(self, features, labels, lamda=0):
+        lamda = shared(lamda, name='lamda')
+        super(LogisticRegression, self).__init__(features, labels, lamda)
 
     def predict(self, dataset):
         """Return predicted class labels as a numpy vecter
@@ -51,13 +52,17 @@ class LogisticRegression(Layer):
         """Compute `p(y = i | x)` corresponding to the output."""
         return T.nnet.softmax(X.dot(self._theta))
 
-    def _cost_function(self, X, y):
+    def _cost(self, X, y):
+        return -T.mean(T.log(self._p_given_X(X))[T.arange(y.shape[0]), y])
+
+    def _cost_and_gradient(self, X, y):
         """Compute penalize and gradient for current @theta"""
 
-        m = X.shape[0]
-        X = self.add_bias(X)
+        y = y.flatten()  # make sure that y is a vector
+        m = y.shape[0]
+        X = Layer.add_bias(X)
 
-        J = -T.mean(T.log(self._p_given_X(X))[T.arange(m), y])
+        J = self._cost(X, y)
         grad = T.grad(J, self._theta)
         rj, rg = self._l2_regularization(m)
 
@@ -71,7 +76,7 @@ class LogisticRegression(Layer):
         X: tensor like
             feature matrix
         """
-        return T.argmax(self._p_given_X(self.add_bias(X)), axis=1)
+        return T.argmax(self._p_given_X(Layer.add_bias(X)), axis=1)
 
     def _errors(self, X, y):
         """Compute the rate of predict_y_i != y_i

@@ -1,11 +1,14 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
+import theano
 import numpy as np
 from scipy import linalg
-from nyml.neural_network import NeuralNetworkClassifier
+from nylearn.nnet import nnet
 
-def initialize_weights(fout, fin):
-    return np.sin(np.arange(1, fout * (fin+1)+1)).reshape((fout, fin+1)) / 10
+
+def initialize_weights(fin, fout):
+    return np.sin(np.arange(1, fout * (fin+1)+1)).reshape((fin+1, fout)) / 10
+
 
 def compute_numerical_gradient(J, theta):
     numgrad = np.zeros(len(theta))
@@ -21,31 +24,43 @@ def compute_numerical_gradient(J, theta):
 
     return numgrad
 
+
 def check_NNGradients(lmbd):
     input_layer_size = 3
     hidden_layer_size = 5
     num_labels = 3
     m = 5
 
-    theta1 = initialize_weights(hidden_layer_size, input_layer_size)
-    theta2 = initialize_weights(num_labels, hidden_layer_size)
+    theta1 = initialize_weights(input_layer_size, hidden_layer_size)
+    theta2 = initialize_weights(hidden_layer_size, num_labels)
 
-    X  = initialize_weights(m, input_layer_size - 1)
-    y  = np.mod(np.arange(0, m), num_labels)
+    X = theano.shared(initialize_weights(m-1, input_layer_size))
+    y = theano.shared(np.mod(np.arange(0, m), num_labels))
 
     nn_params = np.hstack([theta1.reshape(-1), theta2.reshape(-1)])
 
-    nn = NeuralNetworkClassifier(
-        list(range(num_labels)), input_layer_size, [hidden_layer_size], lmbd=lmbd
+    nn = nnet(
+        input_layer_size, [hidden_layer_size], num_labels, lamda=lmbd
     )
-    J, grad = nn._cost_function(X, y)
+    J, grad = nn._cost_and_gradient(X, y)
 
-    g = grad(nn_params)
-    numgrad = compute_numerical_gradient(J, nn_params)
+    J = theano.function([], J)
+    grad = theano.function([], grad)
 
-    print(np.vstack([g, numgrad]).T)
-    print(linalg.norm(g-numgrad) / linalg.norm(g+numgrad))
+    def f(theta):
+        nn.theta = theta
+        return J()
+
+    def g(theta):
+        nn.theta = theta
+        return grad()
+
+    gradient = g(nn_params)
+    numgrad = compute_numerical_gradient(f, nn_params)
+
+    print(np.vstack([gradient, numgrad]).T)
+    print(linalg.norm(gradient-numgrad) / linalg.norm(gradient+numgrad))
 
 
 if __name__ == '__main__':
-    check_NNGradients(3)
+    check_NNGradients(10)
