@@ -4,7 +4,7 @@ import numpy as np
 
 def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
          maxiter=100, earlystop=None, patience=None,
-         improvement_threshold=1e-4, callback=None):
+         improvement_threshold=0.995, callback=None):
     """Minimize a function using a simple minibatch gradient descent.
 
     Parameters
@@ -57,9 +57,9 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
     imin = 0
     imax = blocks - 1
 
+    # early-stopping parameters
+    patience = patience or max(100, blocks*20)
     if earlystop:
-        # early-stopping parameters
-        patience = patience or max(100, blocks*20)
         patience_increase = 2  # wait this much longer when a new best is found
         # go through this many
         # blocks before checking the cost on the validation set
@@ -81,15 +81,14 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
 
                     if this_validation_loss < best_validation_loss:
                         # improve patience if loss improvement is good enough
-                        loss = best_validation_loss - this_validation_loss
-                        if loss > best_validation_loss*improvement_threshold:
+                        if this_validation_loss < best_validation_loss*improvement_threshold:
                             patience = max(patience, iters * patience_increase)
                             best_validation_loss = this_validation_loss
 
-                if patience < iters:
-                    done = True
-                    if callback:
-                        callback(theta, epoch)
+        if earlystop and patience < iters:
+            done = True
+        if callback:
+            callback(theta, epoch)
 
     return theta
 

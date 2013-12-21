@@ -23,7 +23,7 @@ class MinibatchGradientDescent:
         self.model = model
 
     def train(self, dataset, maxiter=200, batch_size=500, eta=1e-5,
-              validation_set=None, patience=None, improvement_threshold=1e-4):
+              validation_set=None, patience=None, improvement_threshold=0.995):
         """Train the given @model with @dataset.
 
         Parameters

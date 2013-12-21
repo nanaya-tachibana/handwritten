@@ -14,7 +14,7 @@ test_set = Dataset(te_x, te_y)
 
 nn = nnet(tr_x.shape[1], [tr_x.shape[1]], 10, lamda=1)
 tn = mbgd(nn)
-tn.train(training_set, maxiter=400, batch_size=1000,
-         validation_set=validation_set, eta=0.01)
+tn.train(training_set, maxiter=400, batch_size=500,
+         validation_set=validation_set, eta=0.1, improvement_threshold=0.999)
 print('training set error: {}, test set error: {}'.format(
     nn.errors(training_set), nn.errors(test_set)))
