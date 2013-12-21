@@ -28,6 +28,10 @@ class LogisticRegression(Layer):
         lamda = shared(lamda, name='lamda')
         super(LogisticRegression, self).__init__(features, labels, lamda)
 
+    def _initialize_theta(self):
+        """Override this function to use other initial value"""
+        return np.zeros((self.n_in+1, self.n_out))
+
     def predict(self, dataset):
         """Return predicted class labels as a numpy vecter
 

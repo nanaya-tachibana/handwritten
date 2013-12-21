@@ -77,7 +77,7 @@ class nnet:
         self.output_layer.grad = self.output_layer.input.T.dot(delta) / m
         _theta = self.output_layer._theta[1:]
 
-        for hidden in self.hidden_layers:
+        for hidden in reversed(self.hidden_layers):
             dy = delta.dot(_theta.T)  # de/dy = w * de/dz(delta)
             o = hidden.output[:, 1:]
             delta = o * (1 - o) * dy  # de/dz = g' * de/dy

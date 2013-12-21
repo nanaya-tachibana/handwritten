@@ -27,20 +27,25 @@ def compute_numerical_gradient(J, theta):
 
 def check_NNGradients(lmbd):
     input_layer_size = 3
-    hidden_layer_size = 5
+    hidden_layer1_size = 5
+    hidden_layer2_size = 4
     num_labels = 3
-    m = 5
+    m = 10
 
-    theta1 = initialize_weights(input_layer_size, hidden_layer_size)
-    theta2 = initialize_weights(hidden_layer_size, num_labels)
+    theta1 = initialize_weights(input_layer_size, hidden_layer1_size)
+    theta2 = initialize_weights(hidden_layer1_size, hidden_layer2_size)
+    theta3 = initialize_weights(hidden_layer2_size, num_labels)
 
     X = theano.shared(initialize_weights(m-1, input_layer_size))
     y = theano.shared(np.mod(np.arange(0, m), num_labels))
 
-    nn_params = np.hstack([theta1.reshape(-1), theta2.reshape(-1)])
+    nn_params = np.hstack(
+        [theta1.reshape(-1), theta2.reshape(-1), theta3.reshape(-1)]
+    )
 
     nn = nnet(
-        input_layer_size, [hidden_layer_size], num_labels, lamda=lmbd
+        input_layer_size, [hidden_layer1_size, hidden_layer2_size],
+        num_labels, lamda=lmbd
     )
     J, grad = nn._cost_and_gradient(X, y)
 

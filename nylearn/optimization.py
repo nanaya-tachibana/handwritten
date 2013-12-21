@@ -2,10 +2,10 @@
 import numpy as np
 
 
-def sgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
-        maxiter=100, earlystop=None, patience=None,
-        improvement_threshold=1e-4, callback=None):
-    """Minimize a function using a simple stochastic gradient descent.
+def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
+         maxiter=100, earlystop=None, patience=None,
+         improvement_threshold=1e-4, callback=None):
+    """Minimize a function using a simple minibatch gradient descent.
 
     Parameters
     ------
@@ -27,8 +27,8 @@ def sgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
     lamda: float
         Regularzation parameter.
 
-    eta0: float
-        Inital learning rate.
+    eta: float
+        Learning rate.
 
     maxiter: int
         Maximum number of iterations to perform.
@@ -53,7 +53,6 @@ def sgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
         theta = theta - eta * fprime(theta, indx)
 
     assert eta0 > 0
-    t = 0
     theta = x0
     imin = 0
     imax = blocks - 1
@@ -69,27 +68,35 @@ def sgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
 
     epoch = 0
     done = False
+    eta = eta0
     while (epoch <= maxiter) and (not done):
         epoch += 1
         for i in range(imin, imax+1):
-            eta = eta0 / (1 + lamda * eta0 * t)
+            iters = (epoch - 1) * blocks + i
             train_one(i, eta)
-            t = t + 1
+
             if earlystop:
-                iters = (epoch - 1) * blocks + i
                 if (iters + 1) % validation_frequency == 0:
                     this_validation_loss = earlystop(theta)
 
                     if this_validation_loss < best_validation_loss:
                         # improve patience if loss improvement is good enough
                         loss = best_validation_loss - this_validation_loss
-                        if loss > improvement_threshold:
+                        if loss > best_validation_loss*improvement_threshold:
                             patience = max(patience, iters * patience_increase)
-                        best_validation_loss = this_validation_loss
+                            best_validation_loss = this_validation_loss
 
-        if patience < iters:
-            done = True
-        if callback:
-            callback(theta, epoch)
+                if patience < iters:
+                    done = True
+                    if callback:
+                        callback(theta, epoch)
 
     return theta
+
+
+# def S_ALAP(grad, last_grad, eta, u, mu=0.9, ro=0.01):
+#     update_u = mu * u + (1 - mu) * grad**2
+#     update_eta = eta * T.maximum(0.5, 1 + ro * (grad * last_grad) / update_u)
+
+#     update = theano.function([], updates=[(u, update_u), (eta, update_eta)])
+#     update()
