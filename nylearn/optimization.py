@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from scipy.linalg import norm
 
 
 def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
          maxiter=100, earlystop=None, patience=None,
-         improvement_threshold=0.995, callback=None):
+         improvement_threshold=0.995, momentum=None, callback=None):
     """Minimize a function using a simple minibatch gradient descent.
 
     Parameters
@@ -50,7 +51,10 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
 
     def train_one(indx, eta):
         nonlocal theta
-        theta = theta - eta * fprime(theta, indx)
+        nonlocal inc
+
+        inc = current_momentum * inc - eta * fprime(theta, indx)
+        theta = theta + inc
 
     assert eta0 > 0
     theta = x0
@@ -65,11 +69,15 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
         # blocks before checking the cost on the validation set
         validation_frequency = min(blocks, patience / 2)
         best_validation_loss = np.inf
+        best_theta = None
 
     epoch = 0
     done = False
+    current_momentum = 0
+    inc = 0
     eta = eta0
     while (epoch <= maxiter) and (not done):
+        current_momentum = momentum(epoch)
         epoch += 1
         for i in range(imin, imax+1):
             iters = (epoch - 1) * blocks + i
@@ -84,13 +92,14 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
                         if this_validation_loss < best_validation_loss*improvement_threshold:
                             patience = max(patience, iters * patience_increase)
                             best_validation_loss = this_validation_loss
+                        best_theta = np.copy(theta)
 
         if earlystop and patience < iters:
             done = True
         if callback:
             callback(theta, epoch)
 
-    return theta
+    return theta, best_theta
 
 
 # def S_ALAP(grad, last_grad, eta, u, mu=0.9, ro=0.01):

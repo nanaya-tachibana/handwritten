@@ -21,4 +21,4 @@ def shared(value, name=None, dtype=''):
 
 def nn_random_paramters(n_in, n_out):
     elpsilon = np.sqrt(6 / (n_in + n_out))
-    return np.random.rand(n_in, n_out) * elpsilon - elpsilon
+    return np.random.rand(n_in, n_out) * elpsilon * 2 - elpsilon

@@ -23,7 +23,8 @@ class MinibatchGradientDescent:
         self.model = model
 
     def train(self, dataset, maxiter=200, batch_size=500, eta=1e-5,
-              validation_set=None, patience=None, improvement_threshold=0.995):
+              validation_set=None, patience=None,
+              improvement_threshold=0.995, momentum=None):
         """Train the given @model with @dataset.
 
         Parameters
@@ -102,11 +103,12 @@ class MinibatchGradientDescent:
 
         from nylearn.optimization import mbgd
 
-        self.model.theta = mbgd(num_train_batches, f, self.model.theta, g,
-                                lamda=lamda, eta0=eta, maxiter=maxiter,
-                                earlystop=earlystop, patience=patience,
-                                improvement_threshold=improvement_threshold,
-                                callback=callback)
+        self.model.theta, best = mbgd(num_train_batches, f, self.model.theta,
+                                      g, lamda=lamda, eta0=eta, maxiter=maxiter,
+                                      earlystop=earlystop, patience=patience,
+                                      improvement_threshold=improvement_threshold,
+                                      momentum=momentum, callback=callback)
+        return best
 
 
 class ConjugateGradientDescent:
@@ -151,3 +153,40 @@ class ConjugateGradientDescent:
 
         self.model.theta = fmin_cg(f=f, x0=self.model.theta, fprime=g,
                                    callback=callback, maxiter=maxiter)
+
+
+def momentum(init=0.9, final=0.9, start=0, end=0):
+    """
+    Implements momentum as described in Section 9 of
+    "A Practical Guide to Training Restricted Boltzmann Machines",
+    Geoffrey Hinton.
+
+    Parameters
+    ------
+    init: float
+        The momentum coefficient to use at the beginning of learning.
+    final: float
+        The momentum coefficient to use at the beginning of learning.
+    start: int
+        The epoch on which to start growing the momentum cofficient.
+    end: int
+        The epoch on which the momentum should reach its final value.
+
+    To use a fixed momentum, setting @start = @end and
+    @init to the fixed value.
+    """
+    assert start <= end
+    inv = end - start
+
+    def get_current_momentum(epoch):
+        if inv == 0:
+            return init
+        else:
+            alpha = (epoch - start) / inv
+            if alpha < 0:
+                alpha = 0
+            elif alpha > 1:
+                alpha = 1
+            return init * (1 - alpha) + final * alpha
+
+    return get_current_momentum
