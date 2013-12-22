@@ -103,12 +103,13 @@ class MinibatchGradientDescent:
 
         from nylearn.optimization import mbgd
 
-        self.model.theta, best = mbgd(num_train_batches, f, self.model.theta,
-                                      g, lamda=lamda, eta0=eta, maxiter=maxiter,
+        self.model.theta, last = mbgd(num_train_batches, f,
+                                      self.model.theta, g, lamda=lamda,
+                                      eta0=eta, maxiter=maxiter,
                                       earlystop=earlystop, patience=patience,
                                       improvement_threshold=improvement_threshold,
                                       momentum=momentum, callback=callback)
-        return best
+        return last
 
 
 class ConjugateGradientDescent:

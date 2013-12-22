@@ -13,12 +13,12 @@ training_set = Dataset(tr_x[:50000], tr_y[:50000])
 validation_set = Dataset(tr_x[50000:], tr_y[50000:])
 test_set = Dataset(te_x, te_y)
 
-m = momentum(0.5, 0.9, start=10, end=100)
+m = momentum(0.2, 0.9, start=30, end=200)
 nn = nnet(tr_x.shape[1], [tr_x.shape[1]], 10, lamda=1)
 tn = mbgd(nn)
-best = tn.train(training_set, maxiter=400, batch_size=500, momentum=m,
+last = tn.train(training_set, maxiter=200, batch_size=500, momentum=m,
                 validation_set=validation_set, eta=0.1)
-print('training set error: {}, test set error: {}'.format(
-    nn.errors(training_set), nn.errors(test_set)))
-nn.theta = best
-print('best theta test set error: {}'.format(nn.errors(test_set)))
+print('validation set error: {}, test set error: {}'.format(
+    nn.errors(validation_set), nn.errors(test_set)))
+nn.theta = last
+print('last theta test set error: {}'.format(nn.errors(test_set)))

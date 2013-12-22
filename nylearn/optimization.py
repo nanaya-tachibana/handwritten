@@ -77,7 +77,8 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
     inc = 0
     eta = eta0
     while (epoch <= maxiter) and (not done):
-        current_momentum = momentum(epoch)
+        if momentum:
+            current_momentum = momentum(epoch)
         epoch += 1
         for i in range(imin, imax+1):
             iters = (epoch - 1) * blocks + i
@@ -99,7 +100,7 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
         if callback:
             callback(theta, epoch)
 
-    return theta, best_theta
+    return best_theta, theta
 
 
 # def S_ALAP(grad, last_grad, eta, u, mu=0.9, ro=0.01):
