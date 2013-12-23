@@ -23,8 +23,8 @@ class Layer:
             Number of output units, the dimension of the space
             in which the labels lie.
 
-        lamda: theano shared variable
-        Parameter used for regularization. Set 0 to disable regularize.
+        lamda: theano like
+            Parameter used for regularization. Set 0 to disable regularize.
         """
         self.n_in = n_in
         self.n_out = n_out
@@ -42,10 +42,8 @@ class Layer:
         w = self.w
         lamda = self.lamda
 
-        reg_cost = lamda * T.sum(w**2) / (2*m)
-        reg_grad = T.concatenate([T.zeros((1, w.shape[1])), lamda * w / m])
-
-        return reg_cost, reg_grad
+        return lamda * T.sum(w**2) / (2*m)
+        #reg_grad = T.concatenate([T.zeros((1, w.shape[1])), lamda * w / m])
 
     @classmethod
     def add_bias(cls, X):

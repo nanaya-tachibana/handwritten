@@ -22,9 +22,9 @@ class MinibatchGradientDescent:
         """
         self.model = model
 
-    def train(self, dataset, maxiter=200, batch_size=500, eta=1e-5,
+    def train(self, dataset, maxiter=200, batch_size=500, eta=1e-6,
               validation_set=None, patience=None,
-              improvement_threshold=0.995, momentum=None):
+              threshold=0.995, momentum=None):
         """Train the given @model with @dataset.
 
         Parameters
@@ -49,9 +49,9 @@ class MinibatchGradientDescent:
         patience: int
             Earlystop parameter. Look at this many blocks regardless.
 
-        improvement_threshold: float
+        threshold: float
             Earlystop parameter. Increase patience when the decreaseing of
-            validation cost is bigger than this value.
+            validation cost is bigger than (1 - @threshold) * previous cost.
         """
 
         def build_func(start, end, dataset, args=()):
@@ -103,11 +103,10 @@ class MinibatchGradientDescent:
 
         from nylearn.optimization import mbgd
 
-        self.model.theta, last = mbgd(num_train_batches, f,
-                                      self.model.theta, g, lamda=lamda,
-                                      eta0=eta, maxiter=maxiter,
-                                      earlystop=earlystop, patience=patience,
-                                      improvement_threshold=improvement_threshold,
+        self.model.theta, last = mbgd(num_train_batches, f, self.model.theta,
+                                      g, lamda=lamda, eta0=eta,
+                                      maxiter=maxiter, earlystop=earlystop,
+                                      patience=patience, threshold=threshold,
                                       momentum=momentum, callback=callback)
         return last
 

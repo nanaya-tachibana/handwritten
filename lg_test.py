@@ -13,10 +13,10 @@ training_set = Dataset(tr_x[:50000], tr_y[:50000])
 validation_set = Dataset(tr_x[50000:], tr_y[50000:])
 test_set = Dataset(te_x, te_y)
 
-m = momentum(0.2, 0.9, start=10, end=100)
-lg = LogisticRegression(tr_x.shape[1], 10, 0.1)
+m = momentum(0.5, 0.9, start=10, end=100)
+lg = LogisticRegression(tr_x.shape[1], 10, 0.01)
 tn = mbgd(lg)
-last = tn.train(training_set, maxiter=200, batch_size=500,
+last = tn.train(training_set, maxiter=200, batch_size=100,
                 validation_set=validation_set, momentum=m)
 print('training set error: {}, test set error: {}'.format(
     lg.errors(training_set), lg.errors(test_set)))

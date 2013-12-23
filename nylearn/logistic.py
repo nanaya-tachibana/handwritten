@@ -66,11 +66,11 @@ class LogisticRegression(Layer):
         m = y.shape[0]
         X = Layer.add_bias(X)
 
-        J = self._cost(X, y)
+        rj = self._l2_regularization(m)
+        J = self._cost(X, y) + rj
         grad = T.grad(J, self._theta)
-        rj, rg = self._l2_regularization(m)
 
-        return J+rj, (grad+rg).flatten()
+        return J, grad.flatten()
 
     def _predict_y(self, X):
         """Predict y given x by choosing `argmax_i P(Y=i|X, theta)`.

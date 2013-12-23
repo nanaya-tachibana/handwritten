@@ -3,9 +3,9 @@ import numpy as np
 from scipy.linalg import norm
 
 
-def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
+def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
          maxiter=100, earlystop=None, patience=None,
-         improvement_threshold=0.995, momentum=None, callback=None):
+         threshold=0.995, momentum=None, callback=None):
     """Minimize a function using a simple minibatch gradient descent.
 
     Parameters
@@ -41,9 +41,9 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
     patience: int
         Earlystop parameter. Look at this many blocks regardless.
 
-    improvement_threshold: float
+    threshold: float
         Earlystop parameter. Increase patience when the decreaseing of
-        validation cost is bigger than this value.
+        validation cost is bigger than (1 - @threshold) * previous cost
 
     callback: callable, callback(x, epoch)
         Optional function that will be called after each iteration.
@@ -63,13 +63,13 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
 
     # early-stopping parameters
     patience = patience or max(100, blocks*20)
+    best_theta = None
     if earlystop:
         patience_increase = 2  # wait this much longer when a new best is found
         # go through this many
         # blocks before checking the cost on the validation set
         validation_frequency = min(blocks, patience / 2)
         best_validation_loss = np.inf
-        best_theta = None
 
     epoch = 0
     done = False
@@ -90,7 +90,8 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
 
                     if this_validation_loss < best_validation_loss:
                         # improve patience if loss improvement is good enough
-                        if this_validation_loss < best_validation_loss*improvement_threshold:
+                        if this_validation_loss < best_validation_loss * \
+                           threshold:
                             patience = max(patience, iters * patience_increase)
                             best_validation_loss = this_validation_loss
                         best_theta = np.copy(theta)
@@ -100,6 +101,8 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-5,
         if callback:
             callback(theta, epoch)
 
+    if best_theta is None:
+        best_theta = theta
     return best_theta, theta
 
 
