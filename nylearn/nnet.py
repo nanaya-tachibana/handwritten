@@ -22,7 +22,7 @@ class HiddenLayer(Layer):
     def output(self, input):
         lin = input.dot(self._theta)
         if self.activation == tanh:
-            val = 1.71 * tanh(2/3 * lin)
+            val = 1.7159 * tanh(0.6667 * lin)
         else:
             val = self.activation(lin)
         return Layer.add_bias(val)
