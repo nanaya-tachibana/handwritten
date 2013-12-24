@@ -22,7 +22,7 @@ class HiddenLayer(Layer):
     def output(self, input):
         lin = input.dot(self._theta)
         if self.activation == tanh:
-            val = 1.7159 * tanh(0.6667 * lin)
+            val = 1.7159*tanh(2/3 * lin)
         else:
             val = self.activation(lin)
         return Layer.add_bias(val)
@@ -76,7 +76,7 @@ class nnet:
             start = end
 
     def _feedforward(self, X):
-        input = Layer.add_bias(X)
+        input = X
         for hidden in self.hidden_layers:
             input = hidden.output(input)
         self.output_layer.input = input
@@ -103,7 +103,7 @@ class nnet:
     def _cost_and_gradient(self, X, y):
         y = y.flatten()  # make sure that y is a vector
         m = y.shape[0]
-
+        X = Layer.add_bias(X)
         self._feedforward(X)
 
         rj_list = []
@@ -125,7 +125,8 @@ class nnet:
         ------
         dataset: dataset
         """
-        y = theano.function([], self._predict_y(dataset.X))
+        X = Layer.add_bias(dataset.X)
+        y = theano.function([], self._predict_y(X))
         return y()
 
     def errors(self, dataset):
@@ -135,15 +136,13 @@ class nnet:
         ------
         dataset: dataset
         """
-        e = theano.function([], self._errors(dataset.X, dataset.y))
+        X = Layer.add_bias(dataset.X)
+        e = theano.function([], self._errors(X, dataset.y))
         return e()
 
     def _predict_y(self, X):
-        o = X
-        for hidden in self.hidden_layers:
-            o = T.nnet.sigmoid(Layer.add_bias(o).dot(hidden._theta))
-
-        return self.output_layer._predict_y(o)
+        self._feedforward(X)
+        return self.output_layer._predict_y(self.output_layer.input)
 
     def _errors(self, X, y):
         """Compute the rate of predict_y_i != y_i

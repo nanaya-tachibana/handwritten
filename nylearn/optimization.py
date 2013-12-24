@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from scipy.linalg import norm
 
 
 def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
@@ -62,13 +61,14 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
     imax = blocks - 1
 
     # early-stopping parameters
-    patience = patience or max(100, blocks*20)
+    if patience is None:
+        patience = min(10000, blocks*int(np.ceil(maxiter/3)))
     best_theta = None
     if earlystop:
         patience_increase = 2  # wait this much longer when a new best is found
         # go through this many
         # blocks before checking the cost on the validation set
-        validation_frequency = min(blocks, patience / 2)
+        validation_frequency = min(blocks, int(patience / 2))
         best_validation_loss = np.inf
 
     epoch = 0
@@ -77,14 +77,14 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
     inc = 0
     eta = eta0
     while (epoch <= maxiter) and (not done):
-        if momentum:
+        if momentum is not None:
             current_momentum = momentum(epoch)
         epoch += 1
         for i in range(imin, imax+1):
             iters = (epoch - 1) * blocks + i
             train_one(i, eta)
 
-            if earlystop:
+            if earlystop is not None:
                 if (iters + 1) % validation_frequency == 0:
                     this_validation_loss = earlystop(theta)
 
@@ -93,13 +93,14 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
                         if this_validation_loss < best_validation_loss * \
                            threshold:
                             patience = max(patience, iters * patience_increase)
-                            best_validation_loss = this_validation_loss
+                        best_validation_loss = this_validation_loss
                         best_theta = np.copy(theta)
 
-        if earlystop and patience < iters:
-            done = True
+                if patience <= iters:
+                    done = True
+                    break
         if callback:
-            callback(theta, epoch)
+            callback(theta, imin, epoch)
 
     if best_theta is None:
         best_theta = theta

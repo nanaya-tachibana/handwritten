@@ -96,10 +96,11 @@ class MinibatchGradientDescent:
             self.model.theta = theta
             return grad_func(indx)
 
-        def callback(theta, epoch):
+        def callback(theta, indx, epoch):
             dataset.permute()
             if validation_cost is not None:
-                print('epoch', epoch, 'validation cost', validation_cost())
+                print('epoch', epoch,
+                      'validation cost', validation_cost())
 
         from nylearn.optimization import mbgd
 

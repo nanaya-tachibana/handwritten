@@ -39,7 +39,8 @@ class LogisticRegression(Layer):
         ------
         dataset: dataset
         """
-        y = theano.function([], self._predict_y(dataset.X))
+        X = Layer.add_bias(dataset.X)
+        y = theano.function([], self._predict_y(X))
         return y()
 
     def errors(self, dataset):
@@ -49,7 +50,8 @@ class LogisticRegression(Layer):
         ------
         dataset: dataset
         """
-        e = theano.function([], self._errors(dataset.X, dataset.y))
+        X = Layer.add_bias(dataset.X)
+        e = theano.function([], self._errors(X, dataset.y))
         return e()
 
     def _p_given_X(self, X):
@@ -63,7 +65,7 @@ class LogisticRegression(Layer):
         """Compute penalize and gradient for current @theta"""
 
         y = y.flatten()  # make sure that y is a vector
-        m = y.shape[0]
+        m = y.shape[0]        
         X = Layer.add_bias(X)
 
         rj = self._l2_regularization(m)
@@ -80,7 +82,7 @@ class LogisticRegression(Layer):
         X: tensor like
             feature matrix
         """
-        return T.argmax(self._p_given_X(Layer.add_bias(X)), axis=1)
+        return T.argmax(self._p_given_X(X), axis=1)
 
     def _errors(self, X, y):
         """Compute the rate of predict_y_i != y_i
