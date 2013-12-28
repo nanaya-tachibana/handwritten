@@ -1,6 +1,5 @@
 *.py[cod]
 TAGS
-test*
 .emacs.desktop
 # C extensions
 *.so
