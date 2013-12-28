@@ -181,7 +181,8 @@ class LeNet5:
         input_shape[0] = -1  # batch size is not a constant
         X = X.reshape(input_shape)
         self._feedforward(X)
-        return self.fullnet._predict_y(self.fullnet.output_layer.input)
+        return self.fullnet.output_layer._predict_y(
+            self.fullnet.output_layer.input)
 
     def _errors(self, X, y):
         """Compute the rate of predict_y_i != y_i
