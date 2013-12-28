@@ -12,6 +12,8 @@ def shared(value, name=None):
     return x
 
 
-def nn_random_paramters(n_in, n_out):
+def nn_random_paramters(n_in, n_out, shape=None):
     elpsilon = np.sqrt(6 / (n_in + n_out))
-    return np.random.rand(n_in, n_out) * elpsilon * 2 - elpsilon
+    if shape is None:
+        shape = (n_in, n_out)
+    return np.random.uniform(-elpsilon, elpsilon, size=shape)

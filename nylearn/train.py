@@ -67,7 +67,7 @@ class MinibatchGradientDescent:
 
         m = dataset.size
         assert m >= 1
-        lamda = self.model.lamda.get_value()
+
         num_train_batches = int(np.ceil(m / batch_size))
         indx = T.lscalar()
         cost_func, grad_func = build_func(indx * batch_size,
@@ -104,8 +104,8 @@ class MinibatchGradientDescent:
 
         from nylearn.optimization import mbgd
 
-        self.model.theta, last = mbgd(num_train_batches, f, self.model.theta,
-                                      g, lamda=lamda, eta0=eta,
+        self.model.theta, last = mbgd(num_train_batches, f,
+                                      self.model.theta, g, eta0=eta,
                                       maxiter=maxiter, earlystop=earlystop,
                                       patience=patience, threshold=threshold,
                                       momentum=momentum, callback=callback)

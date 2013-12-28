@@ -65,14 +65,14 @@ class LogisticRegression(Layer):
         """Compute penalize and gradient for current @theta"""
 
         y = y.flatten()  # make sure that y is a vector
-        m = y.shape[0]        
+        m = y.shape[0]
         X = Layer.add_bias(X)
 
-        rj = self._l2_regularization(m)
-        J = self._cost(X, y) + rj
-        grad = T.grad(J, self._theta)
+        reg = self._l2_regularization(m)
+        J = self._cost(X, y) + reg
+        grad = self._gradient(J)
 
-        return J, grad.flatten()
+        return J, grad
 
     def _predict_y(self, X):
         """Predict y given x by choosing `argmax_i P(Y=i|X, theta)`.

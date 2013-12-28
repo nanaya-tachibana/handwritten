@@ -70,8 +70,9 @@ class nnet:
     @theta.setter
     def theta(self, val):
         start = 0
-        for i, l in enumerate(self.layers):
-            end = start + (self.layers_size[i]+1) * self.layers_size[i+1]
+        for l in self.layers:
+            size = np.prod(l.theta.shape)
+            end = start + size
             l.theta = val[start:end]
             start = end
 
@@ -100,21 +101,25 @@ class nnet:
     #         hidden.grad = hidden.input.T.dot(delta) / m
     #         _theta = hidden._theta[1:]
 
+    def _cost(self, X, y):
+        return self.output_layer._cost(self.output_layer.input, y)
+
+    def _gradient(self, cost):
+        # Theano is awesome!!!
+        return T.concatenate([l._gradient(cost) for l in self.layers])
+
+    def _l2_regularization(self, m):
+        return T.sum([l._l2_regularization(m) for l in self.layers])
+
     def _cost_and_gradient(self, X, y):
         y = y.flatten()  # make sure that y is a vector
         m = y.shape[0]
         X = Layer.add_bias(X)
         self._feedforward(X)
 
-        rj_list = []
-        for l in self.layers:
-            rj_list.append(l._l2_regularization(m))
-        J = self.output_layer._cost(self.output_layer.input, y) + \
-            T.sum(rj_list)
-
-        grad = T.concatenate([
-            T.grad(J, l._theta).flatten() for l in self.layers
-        ])      # Theano is awesome!!!
+        reg = self._l2_regularization(m)
+        J = self._cost(X, y) + reg
+        grad = self._gradient(J)
 
         return J, grad
 

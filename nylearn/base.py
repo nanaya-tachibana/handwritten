@@ -7,9 +7,9 @@ from nylearn.utils import shared, nn_random_paramters
 class Layer:
 
     theta = property(
-        lambda self: self._theta.get_value().reshape(-1),
+        lambda self: self._theta.get_value(borrow=True).reshape(-1),
         lambda self, val: self._theta.set_value(
-            val.reshape(self.n_in+1, self.n_out)
+            val.reshape(self.n_in+1, self.n_out), borrow=True
         )
     )
 
@@ -38,11 +38,14 @@ class Layer:
         """Override this function to use other initial value"""
         return nn_random_paramters(self.n_in+1, self.n_out)
 
+    def _gradient(self, cost):
+        return T.grad(cost, self._theta).flatten()
+
     def _l2_regularization(self, m):
         w = self.w
         lamda = self.lamda
 
-        return lamda * T.sum(w**2) / (2*m)
+        return lamda/(2*m) * T.sum(w**2)
         #reg_grad = T.concatenate([T.zeros((1, w.shape[1])), lamda * w / m])
 
     @classmethod

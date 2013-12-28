@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
+def mbgd(blocks, f, x0, fprime, eta0=1e-6,
          maxiter=100, earlystop=None, patience=None,
          threshold=0.995, momentum=None, callback=None):
     """Minimize a function using a simple minibatch gradient descent.
@@ -23,9 +23,6 @@ def mbgd(blocks, f, x0, fprime, lamda=0, eta0=1e-6,
     fprime: callable, fprime(x, i)
         A function that compute the gradient of f w.r.t x. The return value
         should have the same shape of x.
-
-    lamda: float
-        Regularzation parameter.
 
     eta: float
         Learning rate.

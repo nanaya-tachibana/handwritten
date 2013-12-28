@@ -5,35 +5,54 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
 
-def read_images(f, row, col, size):
+def read_images(f, row, col, num):
     pixels = row * col
-    buf = f.read(pixels*size)
+    buf = f.read(pixels*num)
     return [
         unpack('B'*pixels, buf[p:p+pixels])
-        for p in np.arange(0, size*pixels, pixels)
+        for p in np.arange(0, num*pixels, pixels)
     ]
 
 
-def read_labels(f, size):
-    return unpack('B'*size, f.read(size))
+def read_labels(f, num):
+    return unpack('B'*num, f.read(num))
 
 
-def get_data(size, t):
-    images = open('mnist/'+t+'-images.idx3-ubyte', mode='rb')
-    images.seek(4)
-    # read total number of images and number of row pixels and colum pixels
-    num, row, col = unpack('>III', images.read(12))
-    if size > num:
-        size = num
-    img = read_images(images, row, col, size)
-    images.close()
+def get_training_set(num, size=28):
+    x = 'train'
+    y = x
+    if size != 28:
+        x = x + str(size)
+    return get_samples(num, x), get_labels(num, y)
 
-    labels = open('mnist/'+t+'-labels.idx1-ubyte', mode='rb')
-    labels.seek(8)
-    l = read_labels(labels, size)
-    labels.close()
 
-    return np.array(img, dtype=np.uint8), np.array(l, np.uint8)
+def get_test_set(num, size=28):
+    x = 't10k'
+    y = x
+    if size != 28:
+        x = x + str(size)
+    return get_samples(num, x), get_labels(num, y)
+
+
+def get_samples(num, t):
+    with open('mnist/'+t+'-images.idx3-ubyte', mode='rb') as images:
+        images.seek(4)
+        # read total number of images and number of row pixels and colum pixels
+        _num, row, col = unpack('>III', images.read(12))
+        if num > _num:
+            num = _num
+        img = read_images(images, row, col, num)
+        return np.array(img, dtype=np.uint8)
+
+
+def get_labels(num, t):
+    with open('mnist/'+t+'-labels.idx1-ubyte', mode='rb') as labels:
+        labels.seek(4)
+        _num = unpack('>I', labels.read(4))[0]
+        if num > _num:
+            num = _num
+        l = read_labels(labels, num)
+        return np.array(l, np.uint8)
 
 
 def display_number(x):
@@ -44,6 +63,7 @@ def display_number(x):
     x: 2d array
         A pixel matrix represents a number.
     """
+    assert x.ndim == 2
     plt.imshow(x, cmap=cm.Greys, vmax=x.max(), vmin=0)
     plt.show()
 
@@ -58,10 +78,11 @@ def display_numbers(X, size=10):
 
     size: int
     """
-    mask = np.random.permutation(X.shape[0])[0:size**2]
+    X = np.random.permutation(X)
+    row_pixels = int(np.sqrt(X.shape[1]))
 
     display_array = np.vstack([np.hstack([
-        X[mask, :][size*i+j, :].reshape(28, 28) for j in range(size)
+        X[size*i+j, :].reshape(row_pixels, row_pixels) for j in range(size)
     ]) for i in range(size)])
     plt.imshow(display_array, cmap=cm.Greys, vmax=255, vmin=0)
     plt.show()
