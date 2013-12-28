@@ -23,8 +23,8 @@ class MinibatchGradientDescent:
         self.model = model
 
     def train(self, dataset, maxiter=200, batch_size=500, eta=1e-6,
-              validation_set=None, patience=None,
-              threshold=0.995, momentum=None):
+              validation_set=None, autopermute=True, patience=None,
+              threshold=0.995, momentum=None, adjust_eta=None, callback=None):
         """Train the given @model with @dataset.
 
         Parameters
@@ -52,6 +52,14 @@ class MinibatchGradientDescent:
         threshold: float
             Earlystop parameter. Increase patience when the decreaseing of
             validation cost is bigger than (1 - @threshold) * previous cost.
+
+        momentum: callable momentum(epoch)
+            Optional function that will be called before each iteration
+            and return momentum coefficient.
+
+        adjust_eta: callable adjust_eta(eta, epoch)
+            Optional function that will be called before each iteration
+            and return the adjusted eta.
         """
 
         def build_func(start, end, dataset, args=()):
@@ -97,7 +105,8 @@ class MinibatchGradientDescent:
             return grad_func(indx)
 
         def callback(theta, indx, epoch):
-            dataset.permute()
+            if autopermute:
+                dataset.permute()
             if validation_cost is not None:
                 print('epoch', epoch,
                       'validation cost', validation_cost())
@@ -108,7 +117,8 @@ class MinibatchGradientDescent:
                                       self.model.theta, g, eta0=eta,
                                       maxiter=maxiter, earlystop=earlystop,
                                       patience=patience, threshold=threshold,
-                                      momentum=momentum, callback=callback)
+                                      momentum=momentum, adjust_eta=adjust_eta,
+                                      callback=callback)
         return last
 
 
@@ -173,8 +183,7 @@ def momentum(init=0.9, final=0.9, start=0, end=0):
     end: int
         The epoch on which the momentum should reach its final value.
 
-    To use a fixed momentum, setting @start = @end and
-    @init to the fixed value.
+    Set @start = @end and @init = fixed value to use a fixed momentum.
     """
     assert start <= end
     inv = end - start
@@ -191,3 +200,19 @@ def momentum(init=0.9, final=0.9, start=0, end=0):
             return init * (1 - alpha) + final * alpha
 
     return get_current_momentum
+
+
+def decay(decay_factor, decay_frequency):
+    """Scales the learning rate every @decay_frequency epochs
+
+    Parameters
+    ------
+    decay_factor: float
+    decay_frequency: float
+    """
+    def decay_learning_rate(eta, epoch):
+        if epoch % decay_factor == 0:
+            eta = eta * epoch
+        return eta
+
+    return decay_learning_rate

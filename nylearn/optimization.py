@@ -2,9 +2,9 @@
 import numpy as np
 
 
-def mbgd(blocks, f, x0, fprime, eta0=1e-6,
-         maxiter=100, earlystop=None, patience=None,
-         threshold=0.995, momentum=None, callback=None):
+def mbgd(blocks, f, x0, fprime, eta0=1e-6, maxiter=100,
+         earlystop=None, patience=None, threshold=0.995,
+         momentum=None, adjust_eta=None, callback=None):
     """Minimize a function using a simple minibatch gradient descent.
 
     Parameters
@@ -41,6 +41,14 @@ def mbgd(blocks, f, x0, fprime, eta0=1e-6,
         Earlystop parameter. Increase patience when the decreaseing of
         validation cost is bigger than (1 - @threshold) * previous cost
 
+    momentum: callable momentum(epoch)
+        Optional function that will be called before each iteration
+        and return momentum coefficient.
+
+    adjust_eta: callable adjust_eta(eta, epoch)
+        Optional function that will be called before each iteration
+        and return the adjusted eta.
+
     callback: callable, callback(x, epoch)
         Optional function that will be called after each iteration.
     """
@@ -68,7 +76,7 @@ def mbgd(blocks, f, x0, fprime, eta0=1e-6,
         validation_frequency = min(blocks, int(patience / 2))
         best_validation_loss = np.inf
 
-    epoch = 0
+    epoch = 1
     done = False
     current_momentum = 0
     inc = 0
@@ -76,7 +84,8 @@ def mbgd(blocks, f, x0, fprime, eta0=1e-6,
     while (epoch <= maxiter) and (not done):
         if momentum is not None:
             current_momentum = momentum(epoch)
-        epoch += 1
+        if adjust_eta is not None:
+            eta = adjust_eta(eta, epoch)
         for i in range(imin, imax+1):
             iters = (epoch - 1) * blocks + i
             train_one(i, eta)
@@ -98,6 +107,7 @@ def mbgd(blocks, f, x0, fprime, eta0=1e-6,
                     break
         if callback:
             callback(theta, imin, epoch)
+        epoch += 1
 
     if best_theta is None:
         best_theta = theta

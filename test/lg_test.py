@@ -5,7 +5,7 @@ from nylearn.logistic import LogisticRegression
 from nylearn.dataset import Dataset
 from nylearn.train import ConjugateGradientDescent as cg
 from nylearn.train import MinibatchGradientDescent as mbgd
-from nylearn.train import momentum
+from nylearn.train import momentum, decay
 
 tr_x, tr_y = get_training_set(60000)
 te_x, te_y = get_test_set(10000)
@@ -14,10 +14,11 @@ validation_set = Dataset(tr_x[50000:]/256, tr_y[50000:])
 test_set = Dataset(te_x/256, te_y)
 
 m = momentum(0.9)
+d = decay(0.3, 10)
 lg = LogisticRegression(tr_x.shape[1], 10, 0.01)
 tn = mbgd(lg)
-last = tn.train(training_set, maxiter=200, batch_size=500,
-                validation_set=validation_set, momentum=m, eta=0.1)
+last = tn.train(training_set, maxiter=200, batch_size=500, eta=0.1,
+                validation_set=validation_set, momentum=m, adjust_eta=d)
 print('training set error: {}, test set error: {}'.format(
     lg.errors(training_set), lg.errors(test_set)))
 lg.theta = last

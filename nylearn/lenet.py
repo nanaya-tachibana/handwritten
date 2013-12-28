@@ -93,9 +93,7 @@ class LeNet5:
     """TODO"""
 
     def __init__(self, input_size, conv_layers, hidden_layers, output_size,
-                 batch_size=50, conv_filter_size=5, conv_pool_size=2,
-                 lamda=0):
-        self.batch_size = batch_size
+                 conv_filter_size=5, conv_pool_size=2, lamda=0):
         self.lamda = shared(lamda, name='lamda')
         image_shape = (None, 1, input_size, input_size)
         self.conv_layers = []
@@ -161,8 +159,7 @@ class LeNet5:
         ------
         dataset: dataset
         """
-        X = dataset.X
-        y = theano.function([], self._predict_y(X))
+        y = theano.function([], self._predict_y(dataset.X))
         return y()
 
     def errors(self, dataset):
@@ -172,8 +169,7 @@ class LeNet5:
         ------
         dataset: dataset
         """
-        X = dataset.X
-        e = theano.function([], self._errors(X, dataset.y))
+        e = theano.function([], self._errors(dataset.X, dataset.y))
         return e()
 
     def _predict_y(self, X):

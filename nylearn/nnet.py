@@ -130,8 +130,7 @@ class nnet:
         ------
         dataset: dataset
         """
-        X = Layer.add_bias(dataset.X)
-        y = theano.function([], self._predict_y(X))
+        y = theano.function([], self._predict_y(dataset.X))
         return y()
 
     def errors(self, dataset):
@@ -141,11 +140,11 @@ class nnet:
         ------
         dataset: dataset
         """
-        X = Layer.add_bias(dataset.X)
-        e = theano.function([], self._errors(X, dataset.y))
+        e = theano.function([], self._errors(dataset.X, dataset.y))
         return e()
 
     def _predict_y(self, X):
+        X = Layer.add_bias(X)
         self._feedforward(X)
         return self.output_layer._predict_y(self.output_layer.input)
 
@@ -160,4 +159,5 @@ class nnet:
         y: tensor like
             class label
         """
+        y = y.flatten()  # make sure that y is a vector
         return T.mean(T.neq(self._predict_y(X), y))
