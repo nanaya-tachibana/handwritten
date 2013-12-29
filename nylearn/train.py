@@ -211,8 +211,8 @@ def decay(decay_factor, decay_frequency):
     decay_frequency: float
     """
     def decay_learning_rate(eta, epoch):
-        if epoch % decay_factor == 0:
-            eta = eta * epoch
+        if epoch % decay_frequency == 0:
+            eta = eta * decay_factor
         return eta
 
     return decay_learning_rate

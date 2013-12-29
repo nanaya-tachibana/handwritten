@@ -25,42 +25,46 @@ class HiddenLayer(Layer):
             val = 1.7159*tanh(2/3 * lin)
         else:
             val = self.activation(lin)
-        return Layer.add_bias(val)
+        return val
 
 
-class nnet:
+class MLP(Layer):
     """
-
-    Parameters:
-    ------
-    inpute_layer: int
-        The number of input layer units.
-
-    hidden_layers: list
-        A list of numbers of units in each hidden layers.
-
-    output_layer: int
-        The number of output layer units.
-
-    lamda: float
-        Parameter used for regularization. Set 0 to disable regularize.
+    A class representing fully connected multilayer perceptron.
     """
-    def __init__(self, input_layer_size, hidden_layers_size,
-                 output_layer_size, lamda=0):
-        assert len(hidden_layers_size) > 0
+    def __init__(self, input_size, hidden_layers_size, output_size,
+                 output_layer=LogisticRegression, lamda=0):
+        """
+        Parameters:
+        ------
+        inpute_size: int
+            The number of input layer units.
+
+        hidden_layers_size: list
+            A list of numbers of units in each hidden layer.
+
+        output_size: int
+            The number of output layer units.
+
+        output_layer: object
+
+        lamda: float
+            Parameter used for regularization. Set 0 to disable regularize.
+        """
+        assert isinstance(hidden_layers_size, list) and \
+            len(hidden_layers_size) > 0
 
         self.lamda = shared(lamda, name='lamda')
 
-        self.layers_size = [input_layer_size, output_layer_size]
+        self.layers_size = [input_size, output_size]
         self.layers_size[1:-1] = hidden_layers_size
         self.hidden_layers = [
             HiddenLayer(self.layers_size[i-1], self.layers_size[i],
                         self.lamda, activation=tanh)
             for i in range(1, len(self.layers_size)-1)
         ]
-        self.output_layer = LogisticRegression(
-            self.layers_size[-2], self.layers_size[-1], self.lamda.get_value()
-        )
+        self.output_layer = output_layer(
+            self.layers_size[-2], self.layers_size[-1], self.lamda.get_value())
         self.layers = self.hidden_layers + [self.output_layer]
 
     @property
@@ -76,11 +80,21 @@ class nnet:
             l.theta = val[start:end]
             start = end
 
+    def _cost(self, X, y):
+        return self.output_layer._cost(X, y)
+
+    def _gradient(self, cost):
+        # Theano is awesome!!!
+        return T.concatenate([l._gradient(cost) for l in self.layers])
+
+    def _l2_regularization(self, m):
+        return T.sum([l._l2_regularization(m) for l in self.layers])
+
     def _feedforward(self, X):
         input = X
         for hidden in self.hidden_layers:
-            input = hidden.output(input)
-        self.output_layer.input = input
+            input = hidden.output(self.add_bias(input))
+        return input
 
     # def _backpropagation(self, y):
     #     m = y.shape[0]
@@ -101,27 +115,24 @@ class nnet:
     #         hidden.grad = hidden.input.T.dot(delta) / m
     #         _theta = hidden._theta[1:]
 
-    def _cost(self, X, y):
-        return self.output_layer._cost(self.output_layer.input, y)
-
-    def _gradient(self, cost):
-        # Theano is awesome!!!
-        return T.concatenate([l._gradient(cost) for l in self.layers])
-
-    def _l2_regularization(self, m):
-        return T.sum([l._l2_regularization(m) for l in self.layers])
-
     def _cost_and_gradient(self, X, y):
-        y = y.flatten()  # make sure that y is a vector
+        X, y = self.preprocess(X, y)
         m = y.shape[0]
-        X = Layer.add_bias(X)
-        self._feedforward(X)
 
         reg = self._l2_regularization(m)
         J = self._cost(X, y) + reg
         grad = self._gradient(J)
 
         return J, grad
+
+    def preprocess(self, X, y=None):
+        if y is not None:
+            y = y.flatten()  # make sure that y is a vector
+        output_layer_input = self.add_bias(self._feedforward(X))
+        return output_layer_input, y
+
+    def output(self, input):
+        return self._predict_y(input)
 
     def predict(self, dataset):
         """Return predicted class labels as a numpy vecter
@@ -130,7 +141,8 @@ class nnet:
         ------
         dataset: dataset
         """
-        y = theano.function([], self._predict_y(dataset.X))
+        X, _ = self.preprocess(dataset.X)
+        y = theano.function([], self._predict_y(X))
         return y()
 
     def errors(self, dataset):
@@ -140,13 +152,12 @@ class nnet:
         ------
         dataset: dataset
         """
-        e = theano.function([], self._errors(dataset.X, dataset.y))
+        X, y = self.preprocess(dataset.X, dataset.y)
+        e = theano.function([], self._errors(X, y))
         return e()
 
     def _predict_y(self, X):
-        X = Layer.add_bias(X)
-        self._feedforward(X)
-        return self.output_layer._predict_y(self.output_layer.input)
+        return self.output_layer.output(X)
 
     def _errors(self, X, y):
         """Compute the rate of predict_y_i != y_i
@@ -159,5 +170,4 @@ class nnet:
         y: tensor like
             class label
         """
-        y = y.flatten()  # make sure that y is a vector
         return T.mean(T.neq(self._predict_y(X), y))

@@ -42,6 +42,7 @@ def check_classifier_grad(input_size, output_labels, m, model, x0):
         return grad()
 
     theta = x0
+    print(f(theta))
     gradient = g(theta)
     numgrad = compute_numerical_gradient(f, theta)
 

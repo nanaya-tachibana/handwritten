@@ -32,6 +32,29 @@ class LogisticRegression(Layer):
         """Override this function to use other initial value"""
         return np.zeros((self.n_in+1, self.n_out))
 
+    def _cost(self, X, y):
+        return -T.mean(T.log(self._p_given_X(X))[T.arange(y.shape[0]), y])
+
+    def _cost_and_gradient(self, X, y):
+        """Compute penalize and gradient for current @theta"""
+        X, y = self.preprocess(X, y)
+        m = y.shape[0]
+
+        reg = self._l2_regularization(m)
+        J = self._cost(X, y) + reg
+        grad = self._gradient(J)
+
+        return J, grad
+
+    def preprocess(self, X, y=None):
+        if y is not None:
+            y = y.flatten()  # make sure that y is a vector
+        X = self.add_bias(X)
+        return X, y
+
+    def output(self, input):
+        return self._predict_y(input)
+
     def predict(self, dataset):
         """Return predicted class labels as a numpy vecter
 
@@ -39,7 +62,7 @@ class LogisticRegression(Layer):
         ------
         dataset: dataset
         """
-        X = Layer.add_bias(dataset.X)
+        X, _ = self.preprocess(dataset.X)
         y = theano.function([], self._predict_y(X))
         return y()
 
@@ -50,29 +73,13 @@ class LogisticRegression(Layer):
         ------
         dataset: dataset
         """
-        X = Layer.add_bias(dataset.X)
-        e = theano.function([], self._errors(X, dataset.y))
+        X, y = self.preprocess(dataset.X, dataset.y)
+        e = theano.function([], self._errors(X, y))
         return e()
 
     def _p_given_X(self, X):
         """Compute `p(y = i | x)` corresponding to the output."""
         return T.nnet.softmax(X.dot(self._theta))
-
-    def _cost(self, X, y):
-        return -T.mean(T.log(self._p_given_X(X))[T.arange(y.shape[0]), y])
-
-    def _cost_and_gradient(self, X, y):
-        """Compute penalize and gradient for current @theta"""
-
-        y = y.flatten()  # make sure that y is a vector
-        m = y.shape[0]
-        X = Layer.add_bias(X)
-
-        reg = self._l2_regularization(m)
-        J = self._cost(X, y) + reg
-        grad = self._gradient(J)
-
-        return J, grad
 
     def _predict_y(self, X):
         """Predict y given x by choosing `argmax_i P(Y=i|X, theta)`.
