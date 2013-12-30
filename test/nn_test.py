@@ -13,8 +13,8 @@ training_set = Dataset(tr_x[:50000]/256, tr_y[:50000])
 validation_set = Dataset(tr_x[50000:]/256, tr_y[50000:])
 test_set = Dataset(te_x/256, te_y)
 
-m = momentum(0.9)
-d = decay(0.9, 20)
+m = momentum(0.5, 0.99, end=400)
+d = decay(0.99, 10)
 nn = MLP(tr_x.shape[1], [500], 10, lamda=0.01)
 tn = mbgd(nn)
 last = tn.train(training_set, maxiter=600, batch_size=50, eta=0.01,
