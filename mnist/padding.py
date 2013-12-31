@@ -7,13 +7,14 @@ from mnist import get_samples
 
 
 def add_padding(num, size, t):
+    name = '{}-images.idx3-ubyte'
     msb = 2051
-    x = get_samples(num, t)
+    x = get_samples(num, name.format(t))
     x = x.reshape((num, 28, 28))
     px = np.zeros((num, size, size), dtype=np.uint8)
     px[:, 2:30, 2:30] = x
     px = px.reshape(num, size**2)
-    filename = ''.join(['mnist/', t, str(size), '-images.idx3-ubyte'])
+    filename = name.format(t+str(size))
     with open(filename, mode='xb') as f:
         f.write(pack('>IIII', msb, num, size, size))
         for i in range(num):

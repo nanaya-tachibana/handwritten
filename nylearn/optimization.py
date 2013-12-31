@@ -67,7 +67,7 @@ def mbgd(blocks, f, x0, fprime, eta0=1e-6, maxiter=100,
 
     # early-stopping parameters
     if patience is None:
-        patience = min(10000, blocks*int(np.ceil(maxiter/3)))
+        patience = min(10000, blocks*50)
     best_theta = None
     if earlystop:
         patience_increase = 2  # wait this much longer when a new best is found

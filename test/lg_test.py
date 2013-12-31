@@ -21,5 +21,6 @@ last = tn.train(training_set, maxiter=200, batch_size=500, eta=0.1,
                 validation_set=validation_set, momentum=m, adjust_eta=d)
 print('training set error: {}, test set error: {}'.format(
     lg.errors(training_set), lg.errors(test_set)))
+lg.save('mnist/lg')
 lg.theta = last
 print('last theta test set error: {}'.format(lg.errors(test_set)))

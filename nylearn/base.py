@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 import theano.tensor as T
 
 from nylearn.utils import shared, nn_random_paramters
@@ -127,6 +128,20 @@ class Layer(Model):
         """Return layer output."""
         raise NotImplementedError(str(type(self))
                                   + 'does not implement output')
+
+    def save(self, filename):
+        import os.path
+
+        if os.path.exists(filename):
+            a = ''
+            while a not in ('y', 'Y', 'n', 'N'):
+                a = input('file already exists, overwrite it?(y/n)')
+            if a in ('n', 'N'):
+                return
+        np.save(filename, self.theta)
+
+    def load(self, filename):
+        self.theta = np.load(filename)
 
     @classmethod
     def add_bias(cls, X):

@@ -3,17 +3,19 @@
 from struct import pack
 import numpy as np
 
-from mnist import get_samples, elastic_distortion
+from mnist import get_samples
+from utils import elastic_distortion
 
 
 def distortion(num, size=28):
     msb = 2051
+    name = '{}-images.idx3-ubyte'
     t = 'train'
     if size != 28:
         t = t + str(size)
-    x = get_samples(num, t)
+    filename = name.format(t)
+    x = get_samples(num, filename)
     x = x.reshape((num, size, size))
-    filename = ''.join(['mnist/train', '-elastic', '-images.idx3-ubyte'])
     with open(filename, mode='xb') as f:
         f.write(pack('>IIII', msb, num, size, size))
         for i in range(num):
